@@ -116,19 +116,14 @@ export function useFishPlanPlugin() {
       list.push({
         dateUnix: startDate.unix(),
         dateStr: startDate.format('MM.DD'),
-        topicList: [...v.topicList.map(v=>Object.assign({}, v))],
+        topicList: [...v.topicList.map(v => Object.assign({}, v))],
         festival: festivalData[startDate.diff(_startDate, 'day')],
         check: todayUnix > startDate.unix() ? -1 : 0,
       });
     }
     return list;
   });
-
-  let aid = unsafeWindow.TEAVisualEditor.appId;
-  let cacheToken = JSON.parse(localStorage.getItem(`__tea_cache_tokens_${aid}`) || '{}');
-  let userUniqueId = cacheToken['user_unique_id'];
-  let slardarData = JSON.parse(localStorage.getItem(`SLARDAR${aid}`) || '{}');
-  let cursor = 0;
+  let aid: any, cacheToken: any, userUniqueId: any, slardarData: any, cursor: any
 
   function getLsit(cursor: number) {
     return globalFetch
@@ -161,6 +156,11 @@ export function useFishPlanPlugin() {
 
   return {
     async start() {
+      aid = unsafeWindow.TEAVisualEditor.appId;
+      cacheToken = JSON.parse(localStorage.getItem(`__tea_cache_tokens_${aid}`) || '{}');
+      userUniqueId = cacheToken['user_unique_id'];
+      slardarData = JSON.parse(localStorage.getItem(`SLARDAR${aid}`) || '{}');
+      cursor = 0;
       let state = false;
       let arrList: any[] = [];
       while (!state) {
@@ -183,7 +183,7 @@ export function useFishPlanPlugin() {
           .unix();
         let item = clockInData.find((v) => v.dateUnix === dateUnix);
         if (item && item.check !== 1) {
-          if (item.topicList.find(v2=>v2.id === v.topic.topic_id)) {
+          if (item.topicList.find(v2 => v2.id === v.topic.topic_id)) {
             item.check = 1;
           }
         }

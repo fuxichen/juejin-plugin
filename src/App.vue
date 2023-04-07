@@ -17,7 +17,7 @@ let defaultFormData = {
   blackKeyList: ['星期四'],
   coralReadingRewardsState: false,
   hideHotListState: false,
-  fishPlanState: true,
+  fishPlanState: false,
 };
 // 处理入口icon
 let state = reactive<{
@@ -53,8 +53,11 @@ onMounted(() => {
   }
 });
 
-function showContent() {
+async function showContent() {
   state.open = !state.open;
+  if(state.open){
+    state.clockInData = await fishPlanPlugin.start();
+  }
 }
 
 watch(
@@ -100,36 +103,50 @@ watch(
   },
   { immediate: true }
 );
-
-watch(
-  () => state.formData.fishPlanState,
-  async (val) => {
-    if (val) {
-      state.clockInData = await fishPlanPlugin.start();
-    } else {
-      fishPlanPlugin.stop();
-    }
-  },
-  { immediate: true }
-);
 </script>
 
 <template>
-  <div class="container" ref="iconContainer" :style="{ '--top': `${state.top}px`, '--left': `${state.left}px` }">
+  <div
+    class="container"
+    ref="iconContainer"
+    :style="{ '--top': `${state.top}px`, '--left': `${state.left}px` }"
+  >
     <div class="icon-container" @click="showContent">
-      <img class="icon" :draggable="false"
-        src="https://lf3-cdn-tos.bytescm.com/obj/static/xitu_juejin_web/6c61ae65d1c41ae8221a670fa32d05aa.svg" />
+      <img
+        class="icon"
+        :draggable="false"
+        src="https://lf3-cdn-tos.bytescm.com/obj/static/xitu_juejin_web/6c61ae65d1c41ae8221a670fa32d05aa.svg"
+      />
     </div>
-    <div class="panel" @click.stop="false" @mousedown.stop="false" @touchstart.stop="false" v-if="state.open"
-      :style="{ [`${state.panelState.position}`]: 0 }">
+    <div
+      class="panel"
+      @click.stop="false"
+      @mousedown.stop="false"
+      @touchstart.stop="false"
+      v-if="state.open"
+      :style="{ [`${state.panelState.position}`]: 0 }"
+    >
       <ElForm :model="state.formData">
         <ElFormItem label="沸点关键字屏蔽">
           <ElSwitch v-model="state.formData.pinsBlackState"></ElSwitch>
         </ElFormItem>
         <ElFormItem label="关键字列表">
-          <ElSelect class="hidden-popper" v-model="state.formData.blackKeyList" multiple filterable allow-create
-            default-first-option :reserve-keyword="false" :teleported="false">
-            <ElOption v-for="item in state.formData.blackKeyList" :key="item" :label="item" :value="item"></ElOption>
+          <ElSelect
+            class="hidden-popper"
+            v-model="state.formData.blackKeyList"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            :reserve-keyword="false"
+            :teleported="false"
+          >
+            <ElOption
+              v-for="item in state.formData.blackKeyList"
+              :key="item"
+              :label="item"
+              :value="item"
+            ></ElOption>
           </ElSelect>
         </ElFormItem>
         <ElFormItem label="会员文章阅读任务">
@@ -147,10 +164,22 @@ watch(
         <template v-if="state.formData.fishPlanState">
           <ElFormItem label="签到日历"> </ElFormItem>
           <div class="fishList">
-            <el-popover v-for="item in state.clockInData" :key="item.dateStr" placement="top-start" title="去打卡" :width="100" trigger="hover" popper-class="fish__tip"
-              >
+            <el-popover
+              v-for="item in state.clockInData"
+              :key="item.dateStr"
+              placement="top-start"
+              title="去打卡"
+              :width="100"
+              trigger="hover"
+              popper-class="fish__tip"
+            >
               <div class="link__list">
-                <el-link :href="`https://juejin.cn/pin/club/${item.id}`" target="_blank" v-for="item2 in item.topicList">{{ item2.name }}</el-link>
+                <el-link
+                  :href="`https://juejin.cn/pin/club/${item2.id}`"
+                  target="_blank"
+                  v-for="item2 in item.topicList"
+                  >{{ item2.name }}</el-link
+                >
               </div>
               <template #reference>
                 <div class="fishItem">
@@ -226,7 +255,8 @@ watch(
   align-items: center;
 }
 
-.fish__state {}
+.fish__state {
+}
 
 .fish__state.active {
   color: #409eff;
@@ -235,16 +265,15 @@ watch(
 .fish__state.deactive {
   color: #ff0000;
 }
-.link__list{
+.link__list {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
-
 </style>
 
 <style>
-.el-popper.fish__tip{
+.el-popper.fish__tip {
   z-index: 2059 !important;
 }
 </style>
