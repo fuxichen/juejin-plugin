@@ -1,16 +1,24 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref, watch } from 'vue';
 import { initTouch } from './hooks/useTouchBtn';
-import { ElForm, ElFormItem, ElSwitch, ElPopover, ElLink } from 'element-plus';
-import { BlackType, DogAvatarBlackEnum, dogAvatarBlackTypeList, ParmaItem, usePinsBlackPlugin } from './plugin/usePinsBlackPlugin';
+import { ElForm, ElFormItem, ElSwitch, ElPopover, ElLink, ElMessage } from 'element-plus';
+import {
+  BlackType,
+  DogAvatarBlackEnum,
+  dogAvatarBlackTypeList,
+  ParmaItem,
+  usePinsBlackPlugin,
+} from './plugin/usePinsBlackPlugin';
 import { coralReadingRewards } from './plugin/coralReadingRewards';
 import { useHideHotListPlugin } from './plugin/useHideHotListPlugin';
 import { ClockInData, useFishPlanPlugin } from './plugin/useFishPlan';
+import { useArticleDirectories } from './plugin/useArticleDirectories';
 
 let pinsBlackObj = usePinsBlackPlugin();
 let cralReadingRewardsObj = coralReadingRewards();
 let hideHotListPlugin = useHideHotListPlugin();
 let fishPlanPlugin = useFishPlanPlugin();
+let articleDirectories = useArticleDirectories();
 
 let defaultFormData = {
   pinsBlackState: false,
@@ -19,6 +27,7 @@ let defaultFormData = {
   coralReadingRewardsState: false,
   hideHotListState: false,
   fishPlanState: false,
+  articleDirectoriesState: false,
 };
 // 处理入口icon
 let state = reactive<{
@@ -85,7 +94,7 @@ watch(
     if (val.state2 !== DogAvatarBlackEnum.disabled) {
       arr.push({
         type: BlackType.dogAvatar,
-        dogAvatarBlackType: val.state2
+        dogAvatarBlackType: val.state2,
       });
     }
     if (arr.length) {
@@ -116,6 +125,24 @@ watch(
       hideHotListPlugin.start();
     } else {
       hideHotListPlugin.stop();
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => state.formData.articleDirectoriesState,
+  (val, oldVal) => {
+    if (val) {
+      articleDirectories.start();
+    } else {
+      articleDirectories.stop();
+    }
+    if (typeof oldVal !== 'undefined') {
+      ElMessage({
+        type: 'success',
+        message: '请刷新页面生效',
+      });
     }
   },
   { immediate: true }
@@ -182,12 +209,12 @@ watch(
             ></ElOption>
           </ElSelect>
         </ElFormItem>
-        <ElFormItem label="会员文章阅读任务">
+        <!-- <ElFormItem label="会员文章阅读任务">
           <ElSwitch v-model="state.formData.coralReadingRewardsState"></ElSwitch>
-        </ElFormItem>
-        <ElFormItem label="隐藏榜单">
+        </ElFormItem> -->
+        <!-- <ElFormItem label="隐藏榜单">
           <ElSwitch v-model="state.formData.hideHotListState"></ElSwitch>
-        </ElFormItem>
+        </ElFormItem> -->
         <!-- <ElFormItem label="沸点养鱼计划第四期">
           <template #label>
             <a href="https://juejin.cn/post/7216213764776984633">沸点养鱼计划第四期</a>
@@ -226,6 +253,9 @@ watch(
             </el-popover>
           </div>
         </template> -->
+        <ElFormItem label="小册目录">
+          <ElSwitch v-model="state.formData.articleDirectoriesState"></ElSwitch>
+        </ElFormItem>
       </ElForm>
     </div>
   </div>
