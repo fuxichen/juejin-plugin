@@ -17,6 +17,7 @@
   "dependencies": {
     "dayjs": "^1.11.7",
     "element-plus": "^2.2.29",
+    "spark-md5": "^3.0.2",
     "vue": "^3.2.45"
   },
   "devDependencies": {

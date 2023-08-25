@@ -19,4 +19,7 @@ export function addHistoryListener(fn: Callback) {
   Dep.watch = event;
   historyDep.defined();
   Dep.watch = null; //置空供下一个订阅者使用
+  return function removeHistoryListener() {
+    historyDep.subs = historyDep.subs.filter((v) => v !== event);
+  };
 }

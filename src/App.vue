@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref, watch } from 'vue';
 import { initTouch } from './hooks/useTouchBtn';
 import { ElForm, ElFormItem, ElSwitch, ElPopover, ElLink } from 'element-plus';
-import { usePinsBlackPlugin } from './plugin/usePinsBlackPlugin';
+import { BlackType, DogAvatarBlackEnum, dogAvatarBlackTypeList, ParmaItem, usePinsBlackPlugin } from './plugin/usePinsBlackPlugin';
 import { coralReadingRewards } from './plugin/coralReadingRewards';
 import { useHideHotListPlugin } from './plugin/useHideHotListPlugin';
 import { ClockInData, useFishPlanPlugin } from './plugin/useFishPlan';
@@ -15,6 +15,7 @@ let fishPlanPlugin = useFishPlanPlugin();
 let defaultFormData = {
   pinsBlackState: false,
   blackKeyList: ['星期四'],
+  pinsDogAvatarBlackState: DogAvatarBlackEnum.disabled,
   coralReadingRewardsState: false,
   hideHotListState: false,
   fishPlanState: false,
@@ -55,11 +56,10 @@ onMounted(() => {
 
 async function showContent() {
   state.open = !state.open;
-  if(state.open){
+  if (state.open) {
     state.clockInData = await fishPlanPlugin.start();
   }
 }
-
 watch(
   () => state.formData,
   (val) => {
@@ -69,10 +69,27 @@ watch(
 );
 
 watch(
-  () => ({ list: state.formData.blackKeyList, state: state.formData.pinsBlackState }),
+  () => ({
+    list: state.formData.blackKeyList,
+    state: state.formData.pinsBlackState,
+    state2: state.formData.pinsDogAvatarBlackState,
+  }),
   (val) => {
+    let arr: ParmaItem[] = [];
     if (val.state) {
-      pinsBlackObj.start(val.list);
+      arr.push({
+        type: BlackType.keyWord,
+        blackList: val.list,
+      });
+    }
+    if (val.state2 !== DogAvatarBlackEnum.disabled) {
+      arr.push({
+        type: BlackType.dogAvatar,
+        dogAvatarBlackType: val.state2
+      });
+    }
+    if (arr.length) {
+      pinsBlackObj.start(arr);
     } else {
       pinsBlackObj.stop();
     }
@@ -149,13 +166,29 @@ watch(
             ></ElOption>
           </ElSelect>
         </ElFormItem>
+        <ElFormItem label="沸点狗头屏蔽">
+          <ElSelect
+            v-model="state.formData.pinsDogAvatarBlackState"
+            filterable
+            default-first-option
+            :reserve-keyword="false"
+            :teleported="false"
+          >
+            <ElOption
+              v-for="item in dogAvatarBlackTypeList"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            ></ElOption>
+          </ElSelect>
+        </ElFormItem>
         <ElFormItem label="会员文章阅读任务">
           <ElSwitch v-model="state.formData.coralReadingRewardsState"></ElSwitch>
         </ElFormItem>
         <ElFormItem label="隐藏榜单">
           <ElSwitch v-model="state.formData.hideHotListState"></ElSwitch>
         </ElFormItem>
-        <ElFormItem label="沸点养鱼计划第四期">
+        <!-- <ElFormItem label="沸点养鱼计划第四期">
           <template #label>
             <a href="https://juejin.cn/post/7216213764776984633">沸点养鱼计划第四期</a>
           </template>
@@ -192,7 +225,7 @@ watch(
               </template>
             </el-popover>
           </div>
-        </template>
+        </template> -->
       </ElForm>
     </div>
   </div>
