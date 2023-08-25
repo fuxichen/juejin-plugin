@@ -5,10 +5,7 @@ export function useArticleDirectories() {
   let id: number | null = null;
   let removeHistoryListener: Function;
   function matchUrl() {
-    if (new RegExp('https://juejin\.cn/book/\\d*/section/\\d*.*?').test(location.href)) {
-      console.log('matchUrl');
-      handler()
-    }
+    return new RegExp('https://juejin\.cn/book/\\d*/section/\\d*.*?').test(location.href)
   }
   function stopHandelr() {
     if (id !== null) {
@@ -16,8 +13,9 @@ export function useArticleDirectories() {
     }
   }
   type TocItem = { id: number, title: string, level: 2 | 3 | 4, tocMd: string }
-  // 处理文章内TOC
-  function handler() {
+  
+  // 拦截获取章节内容请求
+  function watchSectionFetch(callback?: Function) {
     if (id !== null) {
       stopHandelr();
     }
@@ -25,7 +23,15 @@ export function useArticleDirectories() {
       let apiMatch = (res.config.input as string).startsWith("https://api.juejin.cn/booklet_api/v1/section/get")
 
       if (apiMatch) {
-        let tocList: TocItem[] = []
+        return handlerSectionResponse(res, callback)
+      }
+      return res;
+    });
+  }
+
+  // 处理文章内TOC数据
+  function handlerSectionResponse(res:any, callback?: Function) {
+    let tocList: TocItem[] = []
         let markdown = res.data.data.section.markdown_show
         let markdownList = markdown.split("\n")
         let id = 0;
@@ -64,15 +70,17 @@ export function useArticleDirectories() {
 
         })
         console.log(tocList)
-        res.data.data.section.markdown_show = `> ## 目录\n > ${tocList.map(v => v.tocMd).join("\n> ")}\n\n${markdown}`
+        // res.data.data.section.markdown_show = `> ## 目录\n > ${tocList.map(v => v.tocMd).join("\n> ")}\n\n${markdown}`
         console.log(res.data)
-        setTimeout(() => handlerSection(tocList), 300)
+        callback && callback(tocList)
         return res;
-      }
-    });
   }
 
+  // 处理文章内TOC样式
   function handlerSection(tocList: TocItem[]) {
+    if (tocList.length === 0) {
+      return
+    }
     let activeSection = document.querySelector('.section.route-active');
     if (activeSection) {
       console.dir(activeSection)
@@ -127,10 +135,33 @@ export function useArticleDirectories() {
 
   }
 
+  function watchBookletFetch(){
+    if (id !== null) {
+      stopHandelr();
+    }
+    id = globalFetch.interceptor.response.use((res) => {
+      let apiMatch = (res.config.input as string).startsWith("https://api.juejin.cn/booklet_api/v1/booklet/get")
+
+      if (apiMatch) {
+        console.log(res)
+      }
+      return res;
+    });
+  }
+
   return {
-    start() {
-      matchUrl()
-      removeHistoryListener = addHistoryListener(matchUrl)
+    start(all: boolean = false) {
+      if(!all){
+        function startHandle(){
+          matchUrl() && watchSectionFetch((tocList: TocItem[])=>{
+            setTimeout(() => handlerSection(tocList), 300)
+          })
+        }
+        startHandle()
+        removeHistoryListener = addHistoryListener(startHandle)
+      }else{
+        
+      }
     },
     stop() {
       stopHandelr();
